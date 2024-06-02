@@ -8,7 +8,11 @@ function connect() {
         stompClient.subscribe('/topic/messages', function (messageOutput) {
             showMessageOutput(JSON.parse(messageOutput.body));
         });
+        stompClient.subscribe('/topic/users', function (userListOutput) {
+            updateUserList(JSON.parse(userListOutput.body));
+        });
         loadChatHistory();
+        requestUserList();
     });
 }
 
@@ -38,6 +42,16 @@ function showMessageOutput(messageOutput) {
     messageArea.scrollTop = messageArea.scrollHeight;
 }
 
+function updateUserList(users) {
+    var userList = document.getElementById('userList');
+    userList.innerHTML = '';
+    users.forEach(function (user) {
+        var userElement = document.createElement('li');
+        userElement.textContent = user;
+        userList.appendChild(userElement);
+    });
+}
+
 function loadChatHistory() {
     fetch('/chat/history')
         .then(response => response.json())
@@ -45,6 +59,12 @@ function loadChatHistory() {
             data.forEach(showMessageOutput);
         })
         .catch(error => console.error('Error loading chat history:', error));
+}
+
+function requestUserList() {
+    if (stompClient) {
+        stompClient.send("/app/users", {});
+    }
 }
 
 window.onload = function() {
